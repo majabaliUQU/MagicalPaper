@@ -34,9 +34,7 @@
             box-shadow: 0 10px 30px rgba(0,0,0,0.2);
             border-radius: 8px;
         }
-        .marker-font {
-            font-family: 'Permanent Marker', cursive;
-        }
+        .marker-font { font-family: 'Permanent Marker', cursive; }
         #overlay {
             position: absolute;
             top: 0;
@@ -50,9 +48,7 @@
             justify-content: space-between;
             padding: 20px;
         }
-        .ui-element {
-            pointer-events: auto;
-        }
+        .ui-element { pointer-events: auto; }
         .btn-doodle {
             background: none;
             border: 3px solid #333;
@@ -62,10 +58,7 @@
             transition: all 0.2s;
             cursor: pointer;
         }
-        .btn-doodle:hover {
-            transform: scale(1.05) rotate(-1deg);
-            background: #fffbe0;
-        }
+        .btn-doodle:hover { transform: scale(1.05) rotate(-1deg); background: #fffbe0; }
         .funny-card {
             background: white;
             border: 3px solid #000;
@@ -76,21 +69,37 @@
             max-width: 300px;
             text-align: center;
         }
-        .credit-badge {
+        .modal {
             position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background: #fff;
-            border: 2px solid #333;
-            padding: 5px 15px;
-            border-radius: 20px;
-            font-size: 14px;
-            cursor: pointer;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            display: none;
+            align-items: center;
+            justify-content: center;
             z-index: 100;
-            transition: transform 0.2s;
+            padding: 20px;
         }
-        .credit-badge:hover {
-            transform: scale(1.1);
+        .control-btn {
+            background: white;
+            border: 2px solid #333;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            cursor: pointer;
+            box-shadow: 2px 2px 0px #000;
+        }
+        textarea {
+            width: 100%;
+            height: 150px;
+            border: 2px dashed #999;
+            padding: 10px;
+            border-radius: 10px;
+            font-family: 'Cairo', sans-serif;
+            resize: none;
         }
     </style>
 </head>
@@ -100,35 +109,56 @@
 
 <div id="overlay">
     <div class="flex justify-between items-start">
-        <div class="ui-element funny-card text-blue-600 p-2 md:p-4" id="p1-score">اللاعب 1: 0</div>
+        <div class="flex flex-col gap-2">
+            <div class="ui-element funny-card text-blue-600 p-2 md:p-4" id="p1-score">اللاعب 1: 0</div>
+            <div class="flex gap-2">
+                <button onclick="toggleFullscreen()" class="ui-element control-btn" title="تكبير الشاشة">🔲</button>
+                <button onclick="openSettings()" class="ui-element control-btn" title="الإعدادات">⚙️</button>
+            </div>
+        </div>
         <div class="ui-element funny-card text-red-600 p-2 md:p-4" id="p2-score">اللاعب 2: 0</div>
     </div>
 
+    <!-- Start Screen -->
     <div id="start-screen" class="ui-element fixed inset-0 bg-white/95 flex flex-col items-center justify-center z-50 p-6 text-center paper-bg">
         <h1 class="text-4xl md:text-6xl font-bold mb-4 marker-font text-gray-800">تحدي الورقة العجيبة 📝</h1>
-        <p class="text-lg md:text-xl mb-8">لعبة الذكريات والضحك اللامتناهي!</p>
+        <p class="text-lg md:text-xl mb-8 font-bold text-blue-600">برمجة محمد جبلي 👨‍💻</p>
         
         <div class="space-y-4 flex flex-col items-center">
             <button onclick="startGame()" class="btn-doodle text-2xl px-12 bg-yellow-200">ابدأ اللعب الآن!</button>
-            
-            <button onclick="shareGame()" class="btn-doodle text-lg px-8 bg-blue-100 flex items-center gap-2">
-                <span>شارك اللعبة</span> 🔗
-            </button>
-        </div>
-        
-        <div class="mt-8 text-sm text-gray-600 max-w-md">
-            <p>التحدي: "انفخ" الورقة بإصبعك. الخاسر ينفذ التحدي المكتوب!</p>
-        </div>
-
-        <div class="credit-badge" onclick="window.open('https://wa.me/966505501575', '_blank')">
-            برمجة محمد جبلي 👨‍💻
+            <div class="flex gap-4">
+                <button onclick="shareGame()" class="btn-doodle text-lg bg-blue-100">شارك اللعبة 🔗</button>
+                <button onclick="openWhatsApp()" class="btn-doodle text-lg bg-green-100">تواصل معي 💬</button>
+            </div>
         </div>
     </div>
 
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="modal ui-element">
+        <div class="bg-white paper-bg p-6 rounded-xl max-w-lg w-full relative border-4 border-black">
+            <h2 class="text-2xl font-bold mb-4 text-center">إعدادات التحديات 🛠️</h2>
+            
+            <div class="bg-gray-100 p-3 rounded-lg mb-4 text-sm border border-gray-300">
+                <p class="font-bold mb-1">نسخ أمر الـ AI (Prompt):</p>
+                <p id="prompt-text" class="text-gray-600 italic">"أعطني قائمة بـ 20 تحدياً مضحكاً جداً وغريباً لشخصين يلعبون لعبة ورقية، اجعل التحديات قصيرة ومسلية جداً، وضع كل تحدي في سطر منفصل."</p>
+                <button onclick="copyPrompt()" class="mt-2 bg-blue-500 text-white px-3 py-1 rounded text-xs">نسخ الأمر 📋</button>
+            </div>
+
+            <textarea id="custom-challenges-input" placeholder="ألصق التحديات هنا... كل تحدي في سطر جديد"></textarea>
+            
+            <div class="grid grid-cols-2 gap-4 mt-4">
+                <button onclick="pasteFromClipboard()" class="btn-doodle bg-orange-100">لصق من الحافظة 📋</button>
+                <button onclick="saveChallenges()" class="btn-doodle bg-green-200">حفظ التحديات ✅</button>
+            </div>
+            <button onclick="closeSettings()" class="mt-4 w-full text-red-500 font-bold">إغلاق</button>
+        </div>
+    </div>
+
+    <!-- Challenge Popup -->
     <div id="challenge-popup" class="ui-element fixed inset-0 bg-black/40 hidden flex items-center justify-center z-40 p-6">
         <div class="funny-card bg-yellow-50 scale-125">
             <h2 class="text-2xl font-bold mb-4" id="challenge-title">تحدي مضحك! 😂</h2>
-            <p class="text-lg mb-6" id="challenge-text">قل نكتة بايخة وإلا سيأخذ الخصم نقطة إضافية!</p>
+            <p class="text-lg mb-6" id="challenge-text"></p>
             <button onclick="closeChallenge()" class="btn-doodle bg-green-200 w-full">تم التنفيذ!</button>
         </div>
     </div>
@@ -138,87 +168,95 @@
 let game;
 let p1Score = 0;
 let p2Score = 0;
-let synth; // Moving declaration here
-let noise;
-
-function playHitSound() {
-    if (synth) synth.triggerAttackRelease("C4", "8n");
-}
-
-function playGoalSound() {
-    if (!synth) return;
-    const melody = ["C4", "E4", "G4", "C5"];
-    const now = Tone.now();
-    melody.forEach((note, i) => {
-        synth.triggerAttackRelease(note, "8n", now + i * 0.1);
-    });
-}
-
-function triggerVibration(duration) {
-    if (typeof navigator !== 'undefined' && navigator.vibrate) {
-        navigator.vibrate(duration);
-    }
-}
-
-function shareGame() {
-    const shareData = {
-        title: 'لعبة تحدي الورقة العجيبة',
-        text: 'تعال نلعب ونضحك سوا في تحدي الورقة العجيبة!',
-        url: window.location.href
-    };
-
-    if (navigator.share) {
-        navigator.share(shareData).catch(err => console.log('Error sharing', err));
-    } else {
-        const dummy = document.createElement('input');
-        document.body.appendChild(dummy);
-        dummy.value = window.location.href;
-        dummy.select();
-        document.execCommand('copy');
-        document.body.removeChild(dummy);
-        // Using custom UI instead of alert
-        const popup = document.createElement('div');
-        popup.className = "fixed top-10 left-1/2 -translate-x-1/2 bg-black text-white px-6 py-3 rounded-full z-[100] animate-bounce";
-        popup.innerText = "تم نسخ الرابط! 🔗";
-        document.body.appendChild(popup);
-        setTimeout(() => popup.remove(), 2000);
-    }
-}
-
-const challenges = [
+let synth;
+let challenges = [
     "قل للطرف الآخر 'أنا أحبك' بصوت بطة!",
     "حاول أن تلمس أنفك بلسانك لمدة 10 ثواني.",
     "قل نكتة سخيفة جداً حتى يضحك الآخر.",
     "تحدث بلهجة معلق رياضي عن الجولة القادمة.",
     "تحدي الصمت: لا تضحك لمدة دقيقة كاملة مهما فعل الآخر.",
-    "اذكر موقفاً محرراً حدث لك قديماً.",
-    "قل 5 كلمات تبدأ بحرف 'ق' في 5 ثواني."
+    "اذكر موقفاً محرراً حدث لك قديماً."
 ];
 
-async function startGame() {
-    // Check if libraries are loaded
-    if (typeof Tone === 'undefined' || typeof Phaser === 'undefined') {
-        const errorMsg = document.createElement('div');
-        errorMsg.className = "fixed inset-0 bg-red-500 text-white flex items-center justify-center p-10 text-center z-[200]";
-        errorMsg.innerHTML = "حدث خطأ في تحميل ملفات اللعبة. <br> يرجى التأكد من اتصال الإنترنت وتحديث الصفحة.";
-        document.body.appendChild(errorMsg);
-        return;
+function toggleFullscreen() {
+    if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(err => {
+            alert(`خطأ: ${err.message}`);
+        });
+    } else {
+        document.exitFullscreen();
     }
+}
 
+function openSettings() {
+    document.getElementById('settings-modal').style.display = 'flex';
+}
+
+function closeSettings() {
+    document.getElementById('settings-modal').style.display = 'none';
+}
+
+function copyPrompt() {
+    const text = document.getElementById('prompt-text').innerText;
+    const dummy = document.createElement('textarea');
+    document.body.appendChild(dummy);
+    dummy.value = text;
+    dummy.select();
+    document.execCommand('copy');
+    document.body.removeChild(dummy);
+    showToast("تم نسخ الأمر! أرسله للذكاء الاصطناعي 🤖");
+}
+
+async function pasteFromClipboard() {
+    try {
+        const text = await navigator.clipboard.readText();
+        document.getElementById('custom-challenges-input').value = text;
+        showToast("تم اللصق بنجاح! ✨");
+    } catch (err) {
+        showToast("اضغط ضغطة مطولة والصف يدوياً (تحتاج إذناً بالمتصفح)");
+    }
+}
+
+function saveChallenges() {
+    const input = document.getElementById('custom-challenges-input').value;
+    if (input.trim()) {
+        const newChallenges = input.split('\n').filter(line => line.trim() !== "");
+        if (newChallenges.length > 0) {
+            challenges = newChallenges;
+            showToast(`تم حفظ ${newChallenges.length} تحدي جديد! 🚀`);
+            closeSettings();
+        }
+    }
+}
+
+function openWhatsApp() {
+    window.open('https://wa.me/966505501575', '_blank');
+}
+
+function showToast(msg) {
+    const toast = document.createElement('div');
+    toast.className = "fixed bottom-20 left-1/2 -translate-x-1/2 bg-black text-white px-6 py-2 rounded-full z-[200] animate-bounce text-sm";
+    toast.innerText = msg;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 2500);
+}
+
+// Sound & Vibration Helpers
+function playHit() { if (synth) synth.triggerAttackRelease("C4", "16n"); }
+function playWin() {
+    if (!synth) return;
+    const now = Tone.now();
+    ["C4", "E4", "G4", "C5"].forEach((n, i) => synth.triggerAttackRelease(n, "8n", now + i * 0.1));
+}
+function vibrate(p) { if (navigator.vibrate) navigator.vibrate(p); }
+
+async function startGame() {
     try {
         await Tone.start();
-        // Initialize Sound after Tone starts
         synth = new Tone.PolySynth(Tone.Synth).toDestination();
-        noise = new Tone.NoiseSynth().toDestination();
-        
         document.getElementById('start-screen').style.display = 'none';
         initGame();
-    } catch (e) {
-        console.error("Audio failed to start:", e);
-        // Still start game even if audio fails
-        document.getElementById('start-screen').style.display = 'none';
-        initGame();
-    }
+    } catch (e) { initGame(); }
 }
 
 function initGame() {
@@ -228,20 +266,9 @@ function initGame() {
         width: window.innerWidth,
         height: window.innerHeight,
         backgroundColor: '#ffffff',
-        physics: {
-            default: 'arcade',
-            arcade: {
-                gravity: { y: 0 },
-                debug: false
-            }
-        },
-        scene: {
-            preload: preload,
-            create: create,
-            update: update
-        }
+        physics: { default: 'arcade', arcade: { gravity: { y: 0 } } },
+        scene: { preload: preload, create: create }
     };
-
     game = new Phaser.Game(config);
 }
 
@@ -249,91 +276,53 @@ function preload() {}
 
 function create() {
     const scene = this;
-    const width = scene.sys.game.config.width;
-    const height = scene.sys.game.config.height;
+    const { width, height } = scene.sys.game.config;
 
-    // Draw horizontal lines (Notebook style)
-    const graphics = scene.add.graphics();
-    graphics.lineStyle(2, 0xe8e8e8, 1);
-    for (let i = 0; i < height; i += 30) {
-        graphics.lineBetween(0, i, width, i);
-    }
-    graphics.lineStyle(3, 0xffcccc, 1);
-    graphics.lineBetween(width > 600 ? 80 : 40, 0, width > 600 ? 80 : 40, height);
+    // Drawing background
+    const g = scene.add.graphics();
+    g.lineStyle(2, 0xe8e8e8);
+    for (let i = 0; i < height; i += 30) g.lineBetween(0, i, width, i);
+    g.lineStyle(3, 0xffcccc);
+    g.lineBetween(60, 0, 60, height);
 
-    // Ball (Crumpled Paper)
+    // Ball
     this.ball = scene.add.circle(width / 2, height / 2, 25, 0xffffff);
     this.ball.setStrokeStyle(3, 0x333333);
     scene.physics.add.existing(this.ball);
-    this.ball.body.setCollideWorldBounds(true);
-    this.ball.body.setBounce(0.9, 0.9);
-    this.ball.body.setDrag(150, 150);
+    this.ball.body.setCollideWorldBounds(true).setBounce(0.9).setDrag(150);
 
-    // Goals (Responsive sizing)
-    const goalWidth = 20;
-    const goalHeight = height * 0.4;
-    this.goal1 = scene.add.rectangle(0, height / 2, goalWidth, goalHeight, 0xffcccc, 0.5);
+    // Goals
+    const goalH = height * 0.4;
+    this.goal1 = scene.add.rectangle(0, height/2, 20, goalH, 0xffcccc, 0.5);
+    this.goal2 = scene.add.rectangle(width, height/2, 20, goalH, 0xccccff, 0.5);
     scene.physics.add.existing(this.goal1, true);
-
-    this.goal2 = scene.add.rectangle(width, height / 2, goalWidth, goalHeight, 0xccccff, 0.5);
     scene.physics.add.existing(this.goal2, true);
 
-    scene.input.on('pointerdown', (pointer) => {
-        const force = 600;
-        const dist = Phaser.Math.Distance.Between(pointer.x, pointer.y, this.ball.x, this.ball.y);
-        
-        if (dist < 150) {
-            const angle = Phaser.Math.Angle.Between(pointer.x, pointer.y, this.ball.x, this.ball.y);
-            this.ball.body.velocity.x += Math.cos(angle) * force;
-            this.ball.body.velocity.y += Math.sin(angle) * force;
-            
-            playHitSound();
-            triggerVibration(40);
-            createScribble(scene, pointer.x, pointer.y);
+    scene.input.on('pointerdown', (p) => {
+        const d = Phaser.Math.Distance.Between(p.x, p.y, this.ball.x, this.ball.y);
+        if (d < 150) {
+            const angle = Phaser.Math.Angle.Between(p.x, p.y, this.ball.x, this.ball.y);
+            this.ball.body.velocity.x += Math.cos(angle) * 700;
+            this.ball.body.velocity.y += Math.sin(angle) * 700;
+            playHit();
+            vibrate(30);
         }
     });
 
-    scene.physics.add.overlap(this.ball, this.goal1, () => scorePoint(2));
-    scene.physics.add.overlap(this.ball, this.goal2, () => scorePoint(1));
+    scene.physics.add.overlap(this.ball, this.goal1, () => score(2));
+    scene.physics.add.overlap(this.ball, this.goal2, () => score(1));
 }
 
-function update() {}
-
-function createScribble(scene, x, y) {
-    const line = scene.add.graphics();
-    line.lineStyle(2, 0x000000, 0.4);
-    line.beginPath();
-    line.moveTo(x - 15, y - 5);
-    line.lineTo(x + 15, y + 5);
-    line.strokePath();
-    
-    scene.tweens.add({
-        targets: line,
-        alpha: 0,
-        duration: 400,
-        onComplete: () => line.destroy()
-    });
-}
-
-function scorePoint(player) {
-    if (player === 1) p1Score++;
-    else p2Score++;
-
+function score(p) {
+    p === 1 ? p1Score++ : p2Score++;
     document.getElementById('p1-score').innerText = `اللاعب 1: ${p1Score}`;
     document.getElementById('p2-score').innerText = `اللاعب 2: ${p2Score}`;
-
-    playGoalSound();
-    triggerVibration([100, 50, 100]);
-
-    game.scene.scenes[0].ball.setPosition(window.innerWidth / 2, window.innerHeight / 2);
-    game.scene.scenes[0].ball.body.setVelocity(0, 0);
-
-    showChallenge(player === 1 ? 2 : 1);
-}
-
-function showChallenge(loser) {
+    playWin();
+    vibrate([100, 50, 100]);
+    game.scene.scenes[0].ball.setPosition(window.innerWidth/2, window.innerHeight/2).body.setVelocity(0,0);
+    
     const randomChallenge = challenges[Math.floor(Math.random() * challenges.length)];
-    document.getElementById('challenge-text').innerText = `اللاعب ${loser} خسر الجولة!\nالتحدي: ${randomChallenge}`;
+    document.getElementById('challenge-text').innerText = `اللاعب ${p === 1 ? 2 : 1} خسر الجولة!\n\n${randomChallenge}`;
     document.getElementById('challenge-popup').style.display = 'flex';
     game.scene.pause();
 }
@@ -343,11 +332,18 @@ function closeChallenge() {
     game.scene.resume();
 }
 
-window.onresize = () => {
-    if (game) {
-        game.scale.resize(window.innerWidth, window.innerHeight);
+function shareGame() {
+    const data = { title: 'تحدي الورقة العجيبة', text: 'تعال نلعب ونضحك!', url: window.location.href };
+    if (navigator.share) navigator.share(data);
+    else {
+        const dummy = document.createElement('input');
+        document.body.appendChild(dummy); dummy.value = window.location.href; dummy.select();
+        document.execCommand('copy'); document.body.removeChild(dummy);
+        showToast("تم نسخ الرابط! 🔗");
     }
-};
+}
+
+window.onresize = () => { if (game) game.scale.resize(window.innerWidth, window.innerHeight); };
 </script>
 </body>
 </html>
